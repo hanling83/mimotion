@@ -6,28 +6,30 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 10
     steps:
-      - name: Checkout codes
-        uses: actions/checkout@v5
+      - name: 检出代码
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
-          token: ${{ secrets.PAT }} #此处PAT需要申请，教程详见：README
+          token: ${{ secrets.PAT }}
 
       - name: 初始化Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.10"
 
-      - name: 开始
+      - name: 提取配置信息
         env:
-            INSPECT_WECHAT_HOOK_KEY: ${{ secrets.INSPECT_WECHAT_HOOK_KEY }} # 指定微信通知的KEY
-            INSPECT_TELEGRAM_BOT_TOKEN: ${{ secrets.INSPECT_TELEGRAM_BOT_TOKEN }} # 指定telegram推送机器人的token
-            INSPECT_TELEGRAM_CHAT_ID: ${{ secrets.INSPECT_TELEGRAM_CHAT_ID }} # 指定telegram推送chatId
-            INSPECT_AES_KEY: ${{ secrets.INSPECT_AES_KEY }} # 指定打印加密数据的AES KEY
-            CONFIG: ${{ secrets.CONFIG }}
-            AES_KEY: ${{ secrets.AES_KEY }}
-            PAT: ${{ secrets.PAT }}
+          INSPECT_WECHAT_HOOK_KEY: ${{ secrets.INSPECT_WECHAT_HOOK_KEY }}
+          INSPECT_TELEGRAM_BOT_TOKEN: ${{ secrets.INSPECT_TELEGRAM_BOT_TOKEN }}
+          INSPECT_TELEGRAM_CHAT_ID: ${{ secrets.INSPECT_TELEGRAM_CHAT_ID }}
+          INSPECT_AES_KEY: ${{ secrets.INSPECT_AES_KEY }}
+          CONFIG: ${{ secrets.CONFIG }}
+          AES_KEY: ${{ secrets.AES_KEY }}
         run: |
-          pip3 install requests pycryptodome
+          pip3 install requests==2.33.1 pycryptodome==3.23.0
           python3 inspect_configs.py
 
+      - name: 清理敏感日志
+        if: always()
+        run: echo "::add-mask::${{ secrets.CONFIG }}"
