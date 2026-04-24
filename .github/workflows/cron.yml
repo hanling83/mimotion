@@ -12,17 +12,22 @@ jobs:
     timeout-minutes: 3
     if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
     steps:
-      - uses: actions/checkout@v3
+      - name: 检出代码
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
-          token: ${{ secrets.PAT }} #此处PAT需要申请，教程详见：README
-      - name: random cron
+          token: ${{ secrets.PAT }}
+
+      - name: 随机化执行时间
         run: |
           source cron_convert.sh
           echo "configed CRON_HOURS ${{ vars.CRON_HOURS }}"
           persist_execute_log ${{ github.event_name }} ${{ vars.CRON_HOURS }}
+
+      - name: 保存并推送
+        run: |
           git config user.name github-actions
           git config user.email github-actions@users.noreply.github.com
-          git add .
-          current=`TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S'`
-          git commit -m "[${current}] random cron trigger by ${{ github.event_name }}"
+          git add cron_change_time
+          git diff --cached --quiet || git commit -m "[$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')] random cron trigger by ${{ github.event_name }}"
+          git pull --rebase origin master
           git push origin master
