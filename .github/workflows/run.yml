@@ -2,40 +2,37 @@ name: 刷步数
 
 on:
   schedule:
-    - cron: '50 1,4,7,10,12,23 * * *'
+    - cron: '55 1,4,7,10,12,23 * * *'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 15
     steps:
-      - name: Checkout codes
-        uses: actions/checkout@v5
+      - name: 检出代码
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          token: ${{ secrets.PAT }} #此处PAT需要申请，教程详见：README
-      - name: Update system and install zsh
-        run: |
-          sudo -E apt-get -qq update
-          sudo -E apt-get install zsh -y
-          
+          token: ${{ secrets.PAT }}
+
       - name: 初始化Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.10"
-          
-      - name: 开始
-        env:
-            CONFIG: ${{ secrets.CONFIG }}
-            AES_KEY: ${{ secrets.AES_KEY }}
-        run: |
-          pip3 install requests pytz pycryptodome
-          python3 main.py
 
-      - name: persist tokens
+      - name: 安装依赖
+        run: pip3 install requests==2.32.3 pytz==2024.2 pycryptodome==3.21.0
+
+      - name: 执行刷步数
+        env:
+          CONFIG: ${{ secrets.CONFIG }}
+          AES_KEY: ${{ secrets.AES_KEY }}
+        run: python3 main.py
+
+      - name: 保存令牌文件
         run: |
           git config user.name github-actions
           git config user.email github-actions@users.noreply.github.com
-          git add .
-          git commit -m "persist tokens trigger by ${{ github.event_name }}"
+          git add encrypted_tokens.data
+          git diff --cached --quiet || git commit -m "persist tokens trigger by ${{ github.event_name }}"
           git push origin master
