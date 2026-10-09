@@ -350,18 +350,26 @@ if __name__ == "__main__":
     if users is None or passwords is None:
         print("未正确配置账号密码，无法执行")
         exit(1)
-    # 可选：FORCE_STEP 环境变量用于临时指定固定步数（调试/手动校准用）。
+    # 可选：FORCE_STEP 环境变量，支持两种写法（调试/手动校准用）：
+    #   1) 固定值      FORCE_STEP=20000        -> 每次都刷 20000
+    #   2) 区间随机    FORCE_STEP=12000-20000  -> 在区间内均匀随机
     # 未设置时完全沿用原有按时间线性缩放的随机区间逻辑。
-    _force_step = os.environ.get("FORCE_STEP")
+    min_step, max_step = get_min_max_by_time()
+    _force_step = os.environ.get("FORCE_STEP", "").strip()
     if _force_step:
         try:
-            min_step = max_step = int(_force_step)
-            print(f"FORCE_STEP已设置：固定步数为 {min_step}")
+            if "-" in _force_step:
+                _lo, _hi = _force_step.split("-", 1)
+                _lo, _hi = int(_lo), int(_hi)
+                if _lo > _hi:
+                    _lo, _hi = _hi, _lo
+                min_step, max_step = _lo, _hi
+                print(f"FORCE_STEP 区间随机：{min_step}~{max_step}")
+            else:
+                min_step = max_step = int(_force_step)
+                print(f"FORCE_STEP 固定步数：{min_step}")
         except ValueError:
-            print(f"FORCE_STEP配置无效({_force_step})，使用按时间缩放的随机区间")
-            min_step, max_step = get_min_max_by_time()
-    else:
-        min_step, max_step = get_min_max_by_time()
+            print(f"FORCE_STEP 配置无效({_force_step})，回落到按时间缩放的随机区间 {min_step}~{max_step}")
     use_concurrent = config.get('USE_CONCURRENT')
     if use_concurrent is not None and use_concurrent == 'True':
         use_concurrent = True
