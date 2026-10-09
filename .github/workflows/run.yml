@@ -28,6 +28,7 @@ jobs:
         env:
             CONFIG: ${{ secrets.CONFIG }}
             AES_KEY: ${{ secrets.AES_KEY }}
+            FORCE_STEP: ${{ secrets.FORCE_STEP }}
         run: |
           pip3 install -r requirements.txt
           python3 main.py
