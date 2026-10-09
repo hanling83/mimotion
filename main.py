@@ -350,7 +350,18 @@ if __name__ == "__main__":
     if users is None or passwords is None:
         print("未正确配置账号密码，无法执行")
         exit(1)
-    min_step, max_step = get_min_max_by_time()
+    # 可选：FORCE_STEP 环境变量用于临时指定固定步数（调试/手动校准用）。
+    # 未设置时完全沿用原有按时间线性缩放的随机区间逻辑。
+    _force_step = os.environ.get("FORCE_STEP")
+    if _force_step:
+        try:
+            min_step = max_step = int(_force_step)
+            print(f"FORCE_STEP已设置：固定步数为 {min_step}")
+        except ValueError:
+            print(f"FORCE_STEP配置无效({_force_step})，使用按时间缩放的随机区间")
+            min_step, max_step = get_min_max_by_time()
+    else:
+        min_step, max_step = get_min_max_by_time()
     use_concurrent = config.get('USE_CONCURRENT')
     if use_concurrent is not None and use_concurrent == 'True':
         use_concurrent = True
